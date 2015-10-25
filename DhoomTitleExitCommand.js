@@ -1,5 +1,5 @@
 //=============================================================================
-// TitleExitCommand.js
+// DhoomTitleExitCommand.js
 //=============================================================================
 
 /*:
@@ -15,7 +15,7 @@
 
 (function() {
 
-    var params = PluginManager.parameters('TitleExitCommand');
+    var params = PluginManager.parameters('DhoomTitleExitCommand');
     var exitText = String(params['Exit Command Text'] || 'Exit');
     var _window_TitleCommand_makeCommandList = 
 	Window_TitleCommand.prototype.makeCommandList;
@@ -37,6 +37,3 @@
     };
 
 })();
-
-
-
