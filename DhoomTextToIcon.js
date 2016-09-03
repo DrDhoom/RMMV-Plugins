@@ -2,54 +2,55 @@
 // DhoomTextToIcon.js
 //=============================================================================
 
+var Imported = Imported || {};
+Imported.Dhoom_TextToIcon = true;
+
+var Dhoom = Dhoom || {};
+Dhoom.TextToIcon = Dhoom.TextToIcon || {};
+
 /*:
- * @plugindesc Draw icon instead of text. Version 1.0
+ * @plugindesc v1.1 - Draw icon instead of text for specified words.
  * @author DrDhoom
  *
  * @param Text and Icon
- * @desc Specify which text converted into which icon. [[Text, Icon Index], [Text, Icon Index], ...]
- * @default []
+ * @desc Specify which text converted into which icon. [Text, Icon Index] | [Text, Icon Index] | ... | [Text, Icon Index]
+ * @default [New Game, 8] | [Status, 21]
  *
  * @param Active Scene
- * @desc In which scenes this script will be applied? If Empty, it'll be applied to all scene. [Scene, Scene, ...]
- * @default []
+ * @desc In which scenes this script will be applied? If Empty, it'll be applied to all scene. [Scene, Scene, ..., Scene]
+ * @default [Scene_Title, Scene_Menu]
  *
- * @help This plugin does not provide plugin commands.
+ * @help v1.1 - Draw icon instead of text for specified words.
+ by DrDhoom (drd-workshop.blogspot.com)
  */
 
-(function() {
+Dhoom.Parameters = PluginManager.parameters('DhoomTextToIcon');
+Dhoom.TextToIcon.txtIconArray = String(Dhoom.Parameters['Text and Icon']).split('|').map(function(string) {
+    if (string.match(/\[(.*?),\s*?(\d+)\]/)) return [RegExp.$1, parseInt(RegExp.$2)];
+});
+Dhoom.TextToIcon.txtScenes = eval(Dhoom.Parameters['Active Scene']) || [];
 
-    var params = PluginManager.parameters('DhoomTextToIcon');
-    var txtIconArray = eval(params['Text and Icon'] || '[]');
-    var txtScene = eval(params['Active Scene'] || '[]');
-
-    var _dhoom_txticon_wndbase_drawtext = 
-	Window_Base.prototype.drawText;
-    Window_Base.prototype.drawText = function(text, x, y, maxWidth, align) {
-    	var sceneIncluded = false;
-    	if (txtScene.length > 0){
-    		txtScene.some(function(entry){
-    			if (SceneManager._scene instanceof entry){
-    				sceneIncluded = true;
-    			};
-    		});
-    	} else {
-    		sceneIncluded = true;
-    	};
-    	if (sceneIncluded){
-    		var iconIndexText = false;
-    		txtIconArray.some(function(entry) {
-			    if (entry[0] === text){
-			    	iconIndexText = entry[1];
-			    };
-			});
-			if (iconIndexText){
-				this.drawIcon(iconIndexText, x, y);
-			} else {
-				_dhoom_txticon_wndbase_drawtext.call(this, text, x, y, maxWidth, align); 
-			};			
-    	} else {
-    		_dhoom_txticon_wndbase_drawtext.call(this, text, x, y, maxWidth, align); 
-    	};
-    };
-})();
+Dhoom.TextToIcon.Window_Base_drawText = Window_Base.prototype.drawText;
+Window_Base.prototype.drawText = function(text, x, y, maxWidth, align) {
+    var sceneIncluded = false;
+    if (Dhoom.TextToIcon.txtScenes.length > 0) {
+        Dhoom.TextToIcon.txtScenes.forEach(function(entry) {
+            if (SceneManager._scene instanceof entry) sceneIncluded = true;
+        }, this);        
+    } else {
+        sceneIncluded = true;
+    }
+    if (sceneIncluded) {
+        var iconIndexText = false;
+        Dhoom.TextToIcon.txtIconArray.forEach(function(entry) {
+            if (entry[0] === text) iconIndexText = entry[1];
+        }, this);
+        if (iconIndexText) {
+            this.drawIcon(iconIndexText, x, y);
+        } else {
+            Dhoom.TextToIcon.Window_Base_drawText.call(this, text, x, y, maxWidth, align);
+        }
+    } else {
+        Dhoom.TextToIcon.Window_Base_drawText.call(this, text, x, y, maxWidth, align);
+    }
+};
