@@ -22,7 +22,7 @@ Dhoom.TexttoIcon = Dhoom.TexttoIcon || {};
  * @help This plugin does not provide plugin commands.
  */
 
-//test change.
+//test change.aaa
 
 Dhoom.Parameters = PluginManager.parameters('DhoomTextToIcon');
 
