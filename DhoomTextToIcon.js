@@ -22,8 +22,6 @@ Dhoom.TexttoIcon = Dhoom.TexttoIcon || {};
  * @help This plugin does not provide plugin commands.
  */
 
-//test change.aaa
-
 Dhoom.Parameters = PluginManager.parameters('DhoomTextToIcon');
 
 Dhoom.TexttoIcon.txtIconArray = Dhoom.Parameters['Text and Icon'].split('|').map(function(str) {
