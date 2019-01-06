@@ -7,7 +7,7 @@ Imported.Dhoom_ParallaxUtils = true;
 var Dhoom = Dhoom || {};
 Dhoom.ParallaxUtils = Dhoom.ParallaxUtils || {};
 /*:
- * @plugindesc Dhoom ParallaxUtils v1.1 - 04/01/2019
+ * @plugindesc Dhoom ParallaxUtils v1.1a - 06/01/2019
  * @author DrDhoom - drd-workshop.blogspot.com
  * 
  * @param Global Switch
@@ -23,6 +23,10 @@ Dhoom.ParallaxUtils = Dhoom.ParallaxUtils || {};
  * @help =============================================================================
  * • Changelogs
  * =============================================================================
+ *   v1.1a - 06/01/2019
+ *     - Fixed: Blinking issue with animated layer that is caused by the bitmap 
+ *              that is not yet loaded.
+ * 
  *   v1.1 - 04/01/2019 
  *     - Removed: Lock X to Map parameter.
  *     - Removed: Lock Y to Map parameter.
@@ -344,8 +348,12 @@ Game_ParallaxLayer.prototype.setBaseName = function (name) {
     this._baseName = name;
 };
 
+Game_ParallaxLayer.prototype.isAnimated = function () {
+    return this.preset().animated;
+};
+
 Game_ParallaxLayer.prototype.filename = function () {
-    this.updateFrame();
+    if (this.isAnimated()) this.updateFrame();
     return this.preset().filename.format($gameMap.mapId(), $gameMap._parallaxName, this._baseName, this._frame + 1);
 };
 
@@ -532,11 +540,7 @@ Spriteset_Map.prototype.updateParallaxUtils = function () {
             if (this._parallaxUtils[i]) {
                 this._parallaxUtils[i].parent.removeChild(this._parallaxUtils[i]);
             }
-            if (obj.isLoop()) {
-                var sprite = new TilingSprite();
-            } else {
-                var sprite = new Sprite();
-            }
+            var sprite = obj.isLoop() ? new TilingSprite() : new Sprite();
             sprite.move(0, 0, Graphics.width, Graphics.height);
             this._parallaxUtils[i] = sprite;
             this.addParallaxUtilsToParent(obj, sprite);
@@ -544,12 +548,17 @@ Spriteset_Map.prototype.updateParallaxUtils = function () {
         }
         var sprite = this._parallaxUtils[i];
         if (sprite) {
-            if (sprite._filename !== filename) {
-                sprite.bitmap = ImageManager.loadParallax(filename);
-                sprite._filename = filename;
-            }
             sprite.opacity = obj.opacity();
-            if (sprite instanceof TilingSprite) {
+            if (sprite._filename !== filename) {                
+                var bitmap = ImageManager.loadParallax(filename);
+                if (bitmap.isReady()) {
+                    sprite.bitmap = bitmap;
+                    sprite._filename = filename;
+                } else if (obj.isAnimated()) {
+                    obj._frameDuration++;
+                }
+            }            
+            if (sprite instanceof TilingSprite) {                
                 sprite.origin.x = obj.getX();
                 sprite.origin.y = obj.getY();
             } else {
