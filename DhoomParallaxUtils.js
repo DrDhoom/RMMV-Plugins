@@ -2,12 +2,12 @@
 // DhoomParallaxUtils.js
 //=============================================================================
 var Imported = Imported || {};
-Imported.Dhoom_ParallaxUtils = true;
+Imported.Dhoom_ParallaxUtils = "1.2";
 
 var Dhoom = Dhoom || {};
 Dhoom.ParallaxUtils = Dhoom.ParallaxUtils || {};
 /*:
- * @plugindesc Dhoom ParallaxUtils v1.1a - 06/01/2019
+ * @plugindesc Dhoom ParallaxUtils v1.2 - 09/04/2019
  * @author DrDhoom - drd-workshop.blogspot.com
  * 
  * @param Global Switch
@@ -23,6 +23,11 @@ Dhoom.ParallaxUtils = Dhoom.ParallaxUtils || {};
  * @help =============================================================================
  * • Changelogs
  * =============================================================================
+ *   v1.2 - 09/04/2019
+ *     - Changed: Allow lock position for looped layer.
+ *     - Changed: Auto Scroll X and Y has decimal numbers for slower scroll 
+ *       speed.
+ *     - Added: "change" plugin command.
  *   v1.1a - 06/01/2019
  *     - Fixed: Blinking issue with animated layer that is caused by the bitmap 
  *              that is not yet loaded.
@@ -68,6 +73,17 @@ Dhoom.ParallaxUtils = Dhoom.ParallaxUtils || {};
  * 
  *   parallaxUtils setPosition PRESETNAME X Y
  *   - Set layer shift X and shift Y.
+ * 
+ *   parallaxUtils change MAPID [PRESETNAME:ORIGINALNAME] [NEWNAME] MAXFRAME
+ *   - Change parallax name to a new name. 
+ *   - MAPID: Map ID can be set to 0 for current map id.
+ *   - PRESETNAME: Preset name in the plugin parameter. Case sensitive.
+ *   - ORIGINALNAME: The parallax name in the map notetag.
+ *   - NEWNAME: Parallax new base name.
+ *   - MAXFRAME: Only necessary for animated parallax.
+ *   Ex. parallaxUtils change ParallaxUtils change 3 [Doodads:decor] [decor2]
+ *       parallaxUtils change ParallaxUtils change 0 [Animated Light:light] [overlay] 4
+ *  
  */
 
 /*~struct~presetSetting:
@@ -117,6 +133,7 @@ Dhoom.ParallaxUtils = Dhoom.ParallaxUtils || {};
 @desc Scroll X speed value. Only if Layer Loop is enabled.
 @type number
 @min -9999999
+@decimals 2
 @default 0
 
 @param scrollY
@@ -124,6 +141,7 @@ Dhoom.ParallaxUtils = Dhoom.ParallaxUtils || {};
 @desc Scroll Y speed value. Only if Layer Loop is enabled.
 @type number
 @min -9999999
+@decimals 2
 @default 0
 
 @param blendType
@@ -215,7 +233,7 @@ Dhoom.ParallaxUtils = Dhoom.ParallaxUtils || {};
 @default 0
 */
 
-Dhoom.Parameters = PluginManager.parameters('DhoomParallaxUtils');
+Dhoom.Parameters = $plugins.filter(function (obj) { return obj.description.match(/Dhoom ParallaxUtils/) })[0].parameters;
 if (!Dhoom.jsonParse) {
     Dhoom.jsonParse = function (string) {
         try {
@@ -253,6 +271,12 @@ Dhoom.ParallaxUtils.blendTypes = ['Normal', 'Additive', 'Multiply', 'Screen'];
 //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 // Game_Map
 //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+Dhoom.ParallaxUtils.Game_Map_initialize = Game_Map.prototype.initialize;
+Game_Map.prototype.initialize = function () {
+    Dhoom.ParallaxUtils.Game_Map_initialize.call(this);
+    this._parallaxUtilsChanges = {};
+};
+
 Dhoom.ParallaxUtils.Game_Map_setup = Game_Map.prototype.setup;
 Game_Map.prototype.setup = function (mapId) {
     Dhoom.ParallaxUtils.Game_Map_setup.call(this, mapId);
@@ -268,11 +292,28 @@ Game_Map.prototype.setupParallaxUtils = function () {
             if (args.length > 1) {
                 var preset = args[0].trim();
                 var baseName = args[1].trim();
+                var originalName = baseName;
                 var maxFrame = args[2] ? Number(args[2].trim()) : 1;
-                this._parallaxUtils.push(new Game_ParallaxLayer(preset, baseName, maxFrame));
+                var key = "%1:%2:%3".format(this.mapId(), preset, baseName);
+                if (this._parallaxUtilsChanges[key]) {
+                    preset = this._parallaxUtilsChanges[key][0];
+                    baseName = this._parallaxUtilsChanges[key][1];
+                    maxFrame = this._parallaxUtilsChanges[key][2];
+                }
+                this._parallaxUtils.push(new Game_ParallaxLayer(preset, baseName, maxFrame, originalName));
             }
         }
     }
+};
+
+Game_Map.prototype.refreshParallaxUtils = function () {
+    this._parallaxUtils.forEach(function (parallax) {
+        var key = "%1:%2:%3".format(this.mapId(), parallax._presetName, parallax._originalName);
+        if (this._parallaxUtilsChanges[key]) {
+            parallax.setBaseName(this._parallaxUtilsChanges[key][1]);
+            parallax.setMaxFrame(this._parallaxUtilsChanges[key][2]);
+        }
+    }, this);
 };
 
 //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
@@ -283,7 +324,16 @@ Game_Interpreter.prototype.pluginCommand = function (command, args) {
     Dhoom.ParallaxUtils.Game_Interpreter_pluginCommand.call(this, command, args);
     if (command.toLowerCase() === 'parallaxutils') {
         var string = args.slice(1).join(" ");
-        if (string.match(/(.+)\s(-?\d+)\s(-?\d+)/i)) {
+        if (args[0].toLowerCase() === 'change' && string.match(/(\d+)\s+\[(.*):(.*)\]\s+\[(.+)\](?:\s*(\d+))?/i)) {
+            var mapId = Number(RegExp.$1) || $gameMap.mapId();
+            var preset = RegExp.$2;
+            var name = RegExp.$3;
+            var newName = RegExp.$4;
+            var frame = Number(RegExp.$5) || 1;
+            var key = "%1:%2:%3".format(mapId, preset, name);
+            $gameMap._parallaxUtilsChanges[key] = [preset, newName, frame];
+            $gameMap.refreshParallaxUtils();
+        } else if (string.match(/(.+)\s(-?\d+)\s(-?\d+)/i)) {
             var name = RegExp.$1;
             switch (args[0].toLowerCase()) {
                 case 'setposition':
@@ -324,9 +374,10 @@ Game_ParallaxLayer.MAP_LOCK_TYPE = 1;
 Game_ParallaxLayer.EVENT_LOCK_TYPE = 2;
 Game_ParallaxLayer.PLAYER_LOCK_TYPE = 3;
 
-Game_ParallaxLayer.prototype.initialize = function (presetName, baseName, maxFrame) {
+Game_ParallaxLayer.prototype.initialize = function (presetName, baseName, maxFrame, originalName) {
     this._presetName = presetName;
     this._presetIndex = Dhoom.ParallaxUtils.getPresetIndex(presetName);
+    this._originalName = originalName;
     this.setBaseName(baseName);
     this._sx = 0;
     this._sy = 0;
@@ -346,6 +397,11 @@ Game_ParallaxLayer.prototype.preset = function () {
 
 Game_ParallaxLayer.prototype.setBaseName = function (name) {
     this._baseName = name;
+    this._frame = 0;
+};
+
+Game_ParallaxLayer.prototype.setMaxFrame = function (frame) {
+    this._maxFrame = frame;
 };
 
 Game_ParallaxLayer.prototype.isAnimated = function () {
@@ -399,7 +455,6 @@ Game_ParallaxLayer.prototype.shiftY = function () {
 };
 
 Game_ParallaxLayer.prototype.getX = function () {
-    if (this.isLoop()) return this.scrollX();
     if (this.isMapLock()) return this.mapX();
     if (this.isEventLock()) return this.eventX();
     if (this.isPlayerLock()) return this.playerX();
@@ -426,7 +481,6 @@ Game_ParallaxLayer.prototype.playerX = function () {
 };
 
 Game_ParallaxLayer.prototype.getY = function () {
-    if (this.isLoop()) return this.scrollY();
     if (this.isMapLock()) return this.mapY();
     if (this.isEventLock()) return this.eventY();
     if (this.isPlayerLock()) return this.playerY();
@@ -549,7 +603,7 @@ Spriteset_Map.prototype.updateParallaxUtils = function () {
         var sprite = this._parallaxUtils[i];
         if (sprite) {
             sprite.opacity = obj.opacity();
-            if (sprite._filename !== filename) {                
+            if (sprite._filename !== filename) {
                 var bitmap = ImageManager.loadParallax(filename);
                 if (bitmap.isReady()) {
                     sprite.bitmap = bitmap;
@@ -557,10 +611,10 @@ Spriteset_Map.prototype.updateParallaxUtils = function () {
                 } else if (obj.isAnimated()) {
                     obj._frameDuration++;
                 }
-            }            
-            if (sprite instanceof TilingSprite) {                
-                sprite.origin.x = obj.getX();
-                sprite.origin.y = obj.getY();
+            }
+            if (sprite instanceof TilingSprite) {
+                sprite.origin.x = obj.scrollX() + obj.getX();
+                sprite.origin.y = obj.scrollY() + obj.getY();
             } else {
                 sprite.x = -obj.getX();
                 sprite.y = -obj.getY();
