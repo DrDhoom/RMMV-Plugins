@@ -7,7 +7,7 @@ Imported.Dhoom_MessageSE = true;
 var Dhoom = Dhoom || {};
 Dhoom.MessageSE = Dhoom.MessageSE || {};
 /*:
- * @plugindesc Dhoom MessageSE v1.0 - 31/12/2018
+ * @plugindesc Dhoom MessageSE v1.0a - 18/07/2019
  * @author DrDhoom - drd-workshop.blogspot.com
  * 
  * @param Enable Switch
@@ -90,6 +90,24 @@ Dhoom.MessageSE = Dhoom.MessageSE || {};
 @type number
 @min 0
 @default 24
+
+@param ignoredCharacters
+@text Ignored Characters
+@desc These characters won't trigger the character SE.
+@type text[]
+@default []
+
+@param ignoredWords
+@text Ignored Words
+@desc These words won't trigger the word SE.
+@type text[]
+@default []
+
+@param ignoredSentences
+@text Ignored Sentences
+@desc These sentences won't trigger the sentence SE.
+@type text[]
+@default []
 */
 
 /*~struct~seSetting:
@@ -152,6 +170,17 @@ if (!Dhoom.loadParam) {
 
 Dhoom.MessageSE.switch = Dhoom.loadParam('Enable Switch');
 Dhoom.MessageSE.presets = Dhoom.loadParam('Preset Settings');
+Dhoom.MessageSE.presets.forEach(function (preset) {
+    preset.ignoredCharacters = (preset.ignoredCharacters || []).map(function (char) {
+        return char.toLowerCase();
+    });
+    preset.ignoredWords = (preset.ignoredWords || []).map(function (char) {
+        return char.toLowerCase();
+    });
+    preset.ignoredSentences = (preset.ignoredSentences || []).map(function (char) {
+        return char.toLowerCase();
+    });
+});
 
 //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 // SoundManager
@@ -247,17 +276,21 @@ Window_Message.prototype.updateMessageSE = function (i, textState) {
         var char = textState.text[i];
         if (this.isEndOfText(textState)) {
             se = preset.pageSe;
-        } else if (char.match(/[^\s]/g)) {
+        } else if (char.match(/([^\s])/g)) {
             var pChar = textState.text[i - 1];
             var nChar = textState.text[i + 1];
             if (char.match(/[.!?'"]/g) && pChar && pChar.match(/[^.!?\s]/g) && (!nChar || nChar.match(/\s/g))) {
-                se = preset.sentenceSe;
-                delay = preset.sentenceDelay;
+                if (!preset.ignoredSentences.contains(RegExp.$1.toLowerCase())) {
+                    se = preset.sentenceSe;
+                    delay = preset.sentenceDelay;
+                }
             } else {
-                se = preset.characterSe;
-                delay = preset.characterDelay;
+                if (!preset.ignoredCharacters.contains(RegExp.$1.toLowerCase())) {
+                    se = preset.characterSe;
+                    delay = preset.characterDelay;
+                }
             }
-        } else if (textState.text[i - 1].match(/[^.!?'"]/g)) {
+        } else if (textState.text[i - 1] && textState.text[i - 1].match(/[^.!?'"]/g)) {
             se = preset.wordSe;
             delay = preset.wordDelay;
         }
