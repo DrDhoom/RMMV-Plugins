@@ -2,7 +2,7 @@
 // DhoomWeaponUpgrade.js
 //=============================================================================
 var Imported = Imported || {};
-Imported.Dhoom_WeaponUpgrade = "2.0";
+Imported.Dhoom_WeaponUpgrade = "2.1";
 
 var Dhoom = Dhoom || {};
 Dhoom.WeaponUpgrade = Dhoom.WeaponUpgrade || {};
