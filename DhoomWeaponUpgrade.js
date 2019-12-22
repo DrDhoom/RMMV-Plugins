@@ -7,7 +7,7 @@ Imported.Dhoom_WeaponUpgrade = "2.0";
 var Dhoom = Dhoom || {};
 Dhoom.WeaponUpgrade = Dhoom.WeaponUpgrade || {};
 /*:
- * @plugindesc Dhoom WeaponUpgrade v2.0 - 18/01/2019
+ * @plugindesc Dhoom WeaponUpgrade v2.1 - 22/12/2019
  * @author DrDhoom - drd-workshop.blogspot.com
  * 
  * @param General
@@ -27,7 +27,7 @@ Dhoom.WeaponUpgrade = Dhoom.WeaponUpgrade || {};
  * @param Default Growth Formula
  * @desc Default weapon parameters growth formula. a = actor, b = weapon, c = level.
  * @type struct<growthSetting>
- * @default {"mhp":"","mmp":"","atk":"b.params[2] + 10 * c","def":"","mtk":"","mdf":"","agi":"","luk":""}
+ * @default {"mhp":"","mmp":"","atk":"b.params[2] + 10 * c","def":"","mat":"","mdf":"","agi":"","luk":""}
  * @parent General
  * 
  * @param Scene
@@ -92,7 +92,7 @@ Dhoom.WeaponUpgrade = Dhoom.WeaponUpgrade || {};
  * =============================================================================
  *   <upgradeFormula TYPE: FORMULA>
  *   Set upgrade parameter growth formula.
- *   TYPE: mhp, mmp, atk, def, mtk, mdf, agi, luk.
+ *   TYPE: mhp, mmp, atk, def, mat, mdf, agi, luk.
  *   FORMULA: a = actor, b = weapon, c = level.
  *            To get the weapon parameter, use b.params[TYPEID], where TYPEID
  *            is the index of the parameter, start from 0.
@@ -131,7 +131,7 @@ Dhoom.WeaponUpgrade = Dhoom.WeaponUpgrade || {};
 @text Defense Growth Formula
 @desc Leave empty if not used. a = actor, b = weapon, c = level.
 
-@param mtk
+@param mat
 @text Magic Attack Growth Formula
 @desc Leave empty if not used. a = actor, b = weapon, c = level.
 
@@ -651,7 +651,7 @@ Dhoom.WeaponUpgrade.shopSettings = Dhoom.loadParam('Shop Settings');
 //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 // Dhoom.WeaponUpgrade
 //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-Dhoom.WeaponUpgrade.paramTypes = ['mhp', 'mmp', 'atk', 'def', 'mtk', 'mdf', 'agi', 'luk'];
+Dhoom.WeaponUpgrade.paramTypes = ['mhp', 'mmp', 'atk', 'def', 'mat', 'mdf', 'agi', 'luk'];
 Dhoom.WeaponUpgrade.isValid = function (weapon) {
     return DataManager.isWeapon(weapon) && !weapon.noUpgrade;
 };
@@ -1151,7 +1151,7 @@ if (Imported.YEP_ItemCore) {
             if (this.setting().stats.valueStyle.fontSize && this.setting().stats.valueStyle.fontSize > th)
                 th = this.setting().stats.valueStyle.fontSize;
             var types = Dhoom.WeaponUpgrade.paramTypes;
-            for (var i = 0; i < 7; i++) {
+            for (var i = 0; i < 8; i++) {
                 var upgrade = Dhoom.WeaponUpgrade.getUpgradedStat(types[i], this._actor, weapon, next);
                 var value = upgrade - weapon.params[i];
                 if (value !== 0) {
