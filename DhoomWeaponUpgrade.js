@@ -2,12 +2,12 @@
 // DhoomWeaponUpgrade.js
 //=============================================================================
 var Imported = Imported || {};
-Imported.Dhoom_WeaponUpgrade = "2.1";
+Imported.Dhoom_WeaponUpgrade = "2.1a";
 
 var Dhoom = Dhoom || {};
 Dhoom.WeaponUpgrade = Dhoom.WeaponUpgrade || {};
 /*:
- * @plugindesc Dhoom WeaponUpgrade v2.1 - 22/12/2019
+ * @plugindesc Dhoom WeaponUpgrade v2.1a - 22/12/2019 ~ 29/04/2023
  * @author DrDhoom - drd-workshop.blogspot.com
  * 
  * @param General
@@ -700,7 +700,7 @@ Dhoom.WeaponUpgrade.upgradeWeapon = function (actor, weapon, amount) {
             if (!this.isWeaponLevelMax(weapon)) {
                 var level = (weapon.weaponLevel || 1) + 1;
                 weapon.weaponLevel = level;
-                for (var j = 0; j < 7; j++) {
+                for (var j = 0; j <= 7; j++) {
                     var type = types[j];
                     weapon.params[j] = this.getUpgradedStat(type, actor, weapon, level);
                 }
@@ -1151,7 +1151,7 @@ if (Imported.YEP_ItemCore) {
             if (this.setting().stats.valueStyle.fontSize && this.setting().stats.valueStyle.fontSize > th)
                 th = this.setting().stats.valueStyle.fontSize;
             var types = Dhoom.WeaponUpgrade.paramTypes;
-            for (var i = 0; i < 8; i++) {
+            for (var i = 0; i <= 7; i++) {
                 var upgrade = Dhoom.WeaponUpgrade.getUpgradedStat(types[i], this._actor, weapon, next);
                 var value = upgrade - weapon.params[i];
                 if (value !== 0) {
