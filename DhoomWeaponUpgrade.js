@@ -816,7 +816,7 @@ if (Imported.YEP_ItemCore) {
                     break;
                 case 'upgrade':
                     var actorId = Number(args[1]);
-                    Dhoom.WeaponUpgrade.upgradeWeapon($gameActors.actor(actorId), $gameActors.actor(actorId).equips()[0], 1);
+                    Dhoom.WeaponUpgrade.upgradeWeapon($gameActors.actor(actorId), $gameActors.actor(actorId).weapons()[0], 1);
                     break;
             }
         }
@@ -1090,7 +1090,7 @@ if (Imported.YEP_ItemCore) {
     Window_WeaponUpActor.prototype.isCommandEnabled = function (index) {
         var actor = $gameParty.members()[index];
         if (!actor) return false;
-        var weapon = actor.equips()[0];
+        var weapon = actor.weapons()[0];
         return Dhoom.WeaponUpgrade.isValid(weapon) && !Dhoom.WeaponUpgrade.isWeaponLevelMax(weapon) && Dhoom.WeaponUpgrade.shopCanUpgrade(weapon.weaponLevel) && $gameParty.gold() >= Dhoom.WeaponUpgrade.getUpgradeCost(actor, weapon, weapon.weaponLevel + 1);
     };
 
@@ -1122,7 +1122,7 @@ if (Imported.YEP_ItemCore) {
     Window_WeaponUpgrade.prototype.refresh = function () {
         this.contents.clear();
         if (!this._actor) return;
-        var weapon = this._actor.equips()[0];
+        var weapon = this._actor.weapons()[0];
         var name = weapon ? weapon.name : "";
         var level = "-";
         var next = "-";
@@ -1251,8 +1251,8 @@ if (Imported.YEP_ItemCore) {
     Scene_WeaponUpgrade.prototype.endSE = function () {
         this._seBuffer = undefined;
         var actor = this._actorWindow.actor();
-        var weapon = actor.equips()[0];
-        Dhoom.WeaponUpgrade.upgradeWeapon(actor, actor.equips()[0], 1);
+        var weapon = actor.weapons()[0];
+        Dhoom.WeaponUpgrade.upgradeWeapon(actor, actor.weapons()[0], 1);
         $gameParty.loseGold(Dhoom.WeaponUpgrade.getUpgradeCost(actor, weapon, weapon.weaponLevel));
         this._goldWindow.refresh();
         this._actorWindow.refresh();
