@@ -2,12 +2,12 @@
 // DhoomParallaxUtils.js
 //=============================================================================
 var Imported = Imported || {};
-Imported.Dhoom_ParallaxUtils = "1.2";
+Imported.Dhoom_ParallaxUtils = "1.2a";
 
 var Dhoom = Dhoom || {};
 Dhoom.ParallaxUtils = Dhoom.ParallaxUtils || {};
 /*:
- * @plugindesc Dhoom ParallaxUtils v1.2 - 09/04/2019
+ * @plugindesc Dhoom ParallaxUtils v1.2a - 04/01/2019 ~ 29/04/2023
  * @author DrDhoom - drd-workshop.blogspot.com
  * 
  * @param Global Switch
@@ -388,7 +388,7 @@ Game_ParallaxLayer.prototype.initialize = function (presetName, baseName, maxFra
     this._fadeOpacity = this.minFade();
     this._fadeDir = 1;
     this._eventId = this.preset().lock.eventId;
-    this.setPosition(this.preset().lock.shiftY, this.preset().lock.shiftY);
+    this.setPosition(this.preset().lock.shiftX, this.preset().lock.shiftY);
 };
 
 Game_ParallaxLayer.prototype.preset = function () {
